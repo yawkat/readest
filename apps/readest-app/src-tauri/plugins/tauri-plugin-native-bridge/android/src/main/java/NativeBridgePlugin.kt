@@ -447,14 +447,6 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
                     invoke.resolve()
                     return@runOnUiThread
                 }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    activity.finishAndRemoveTask()
-                } else {
-                    activity.finishAffinity()
-                }
-
-                activity.moveTaskToBack(true)
                 activity.finish()
                 invoke.resolve()
             } catch (e: Exception) {
