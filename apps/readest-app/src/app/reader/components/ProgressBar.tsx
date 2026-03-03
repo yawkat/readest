@@ -4,6 +4,7 @@ import { Trans } from 'react-i18next';
 import { Insets } from '@/types/misc';
 import { useEnv } from '@/context/EnvContext';
 import { useReaderStore } from '@/store/readerStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useBookDataStore } from '@/store/bookDataStore';
 import { formatNumber, formatProgress } from '@/utils/progress';
@@ -27,8 +28,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 }) => {
   const _ = useTranslation();
   const { envConfig, appService } = useEnv();
+  const { settings } = useSettingsStore();
   const { getBookData } = useBookDataStore();
-  const { getProgress, getViewSettings, getView } = useReaderStore();
+  const { getProgress, getViewSettings, getView, hoveredBookKey } = useReaderStore();
   const view = getView(bookKey);
   const bookData = getBookData(bookKey);
   const viewSettings = getViewSettings(bookKey)!;
@@ -149,6 +151,16 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
   }, [progressBarMode]);
 
   const isMobile = appService?.isMobile || window.innerWidth < 640;
+  const isNavigationBarEnabledInReader =
+    settings.navigationBarVisibility === 'always' ||
+    (settings.navigationBarVisibility === 'outside-reader' && hoveredBookKey === bookKey);
+  const progressBottomPadding = appService?.hasSafeAreaInset
+    ? appService?.isAndroidApp
+      ? isNavigationBarEnabledInReader
+        ? gridInsets.bottom
+        : 0
+      : gridInsets.bottom * 0.33
+    : 0;
 
   return (
     <div
@@ -186,7 +198,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
           : {
               paddingInlineStart: `calc(${horizontalGap / 2}% + ${contentInsets.left / 2}px)`,
               paddingInlineEnd: `calc(${horizontalGap / 2}% + ${contentInsets.right / 2}px)`,
-              paddingBottom: appService?.hasSafeAreaInset ? `${gridInsets.bottom * 0.33}px` : 0,
+              paddingBottom: `${progressBottomPadding}px`,
             }
       }
     >
