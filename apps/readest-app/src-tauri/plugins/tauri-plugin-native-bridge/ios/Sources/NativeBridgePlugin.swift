@@ -640,6 +640,10 @@ class NativeBridgePlugin: Plugin {
     }
   }
 
+  @objc public func close_activity(_ invoke: Invoke) {
+    invoke.resolve()
+  }
+
   @objc public func lock_screen_orientation(_ invoke: Invoke) throws {
     guard let args = try? invoke.parseArgs(LockScreenOrientationRequestArgs.self) else {
       return invoke.reject("Invalid arguments")

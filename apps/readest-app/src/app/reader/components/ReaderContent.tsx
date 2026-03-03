@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Book } from '@/types/book';
@@ -23,6 +23,7 @@ import { eventDispatcher } from '@/utils/event';
 import { navigateToLibrary } from '@/utils/nav';
 import { clearDiscordPresence } from '@/utils/discord';
 import { BOOK_IDS_SEPARATOR } from '@/services/constants';
+import { closeActivity } from '@/utils/bridge';
 import { BookDetailModal } from '@/components/metadata';
 
 import useBooksManager from '../hooks/useBooksManager';
@@ -171,19 +172,27 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
     await saveSettings(envConfig, settings);
   }, 200);
 
-  const handleCloseBooksToLibrary = () => {
+  const handleBackFromReader = useCallback(async () => {
+    const params = new URLSearchParams(window.location.search);
+    const openedFromExternalApp = params.get('externalOpen') === '1';
+    if (openedFromExternalApp && appService?.isAndroidApp) {
+      closeActivity().catch((error: unknown) => {
+        console.warn('Failed to close activity via native bridge:', error);
+      });
+      return;
+    }
     handleCloseBooks();
     if (isTauriAppPlatform()) {
       const currentWindow = getCurrentWindow();
       if (currentWindow.label === 'main') {
         navigateBackToLibrary();
       } else {
-        currentWindow.close();
+        await currentWindow.close();
       }
     } else {
       navigateBackToLibrary();
     }
-  };
+  }, [appService, handleCloseBooks]);
 
   const handleCloseBook = async (bookKey: string) => {
     saveConfigAndCloseBook(bookKey);
@@ -228,7 +237,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
       <BooksGrid
         bookKeys={bookKeys}
         onCloseBook={handleCloseBook}
-        onGoToLibrary={handleCloseBooksToLibrary}
+        onGoToLibrary={handleBackFromReader}
       />
       {isSettingsDialogOpen && <SettingsDialog bookKey={settingsDialogBookKey} />}
       <Notebook />

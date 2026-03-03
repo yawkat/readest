@@ -64,6 +64,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::get_status_bar_height,
             commands::get_sys_fonts_list,
             commands::intercept_keys,
+            commands::close_activity,
             commands::lock_screen_orientation,
             commands::iap_is_available,
             commands::iap_initialize,

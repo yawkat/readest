@@ -440,6 +440,22 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
     }
 
     @Command
+    fun close_activity(invoke: Invoke) {
+        activity.runOnUiThread {
+            try {
+                if (activity.isFinishing || activity.isDestroyed) {
+                    invoke.resolve()
+                    return@runOnUiThread
+                }
+                activity.finish()
+                invoke.resolve()
+            } catch (e: Exception) {
+                invoke.reject("Failed to close activity: ${e.message}")
+            }
+        }
+    }
+
+    @Command
     fun lock_screen_orientation(invoke: Invoke) {
       val args = invoke.parseArgs(LockScreenOrientationRequestArgs::class.java)
       val orientation = args.orientation ?: "auto"

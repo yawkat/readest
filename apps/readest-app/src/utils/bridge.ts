@@ -158,6 +158,10 @@ export async function interceptKeys(request: InterceptKeysRequest): Promise<void
   });
 }
 
+export async function closeActivity(): Promise<void> {
+  await invoke('plugin:native-bridge|close_activity');
+}
+
 export async function lockScreenOrientation(request: LockScreenRequest): Promise<void> {
   await invoke('plugin:native-bridge|lock_screen_orientation', {
     payload: request,

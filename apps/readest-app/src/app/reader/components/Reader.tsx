@@ -20,7 +20,7 @@ import { eventDispatcher } from '@/utils/event';
 import { interceptWindowOpen } from '@/utils/open';
 import { mountAdditionalFonts } from '@/styles/fonts';
 import { isTauriAppPlatform } from '@/services/environment';
-import { getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
+import { closeActivity, getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
 import { AboutWindow } from '@/components/AboutWindow';
 import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { KOSyncSettingsWindow } from './KOSyncSettings';
@@ -108,9 +108,21 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
 
   const handleKeyDown = (event: CustomEvent) => {
     if (event.detail.keyName === 'Back') {
-      if (hoveredBookKey) {
+      const handleReaderBack = () => {
+        const params = new URLSearchParams(window.location.search);
+        const openedFromExternalApp = params.get('externalOpen') === '1';
+        if (appService?.isAndroidApp && openedFromExternalApp) {
+          closeActivity().catch((error: unknown) => {
+            console.warn('Failed to close activity via native bridge:', error);
+          });
+          return;
+        }
         eventDispatcher.dispatch('close-reader');
         router.back();
+      };
+
+      if (hoveredBookKey) {
+        handleReaderBack();
         return true;
       }
       if (getIsSideBarVisible() && !isSideBarPinned) {
@@ -118,8 +130,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
       } else if (getIsNotebookVisible() && !isNotebookPinned) {
         setNotebookVisible(false);
       } else {
-        eventDispatcher.dispatch('close-reader');
-        router.back();
+        handleReaderBack();
       }
       return true;
     }

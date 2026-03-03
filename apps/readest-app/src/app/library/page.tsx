@@ -126,6 +126,8 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
     [key: string]: number | null;
   }>({});
   const [pendingNavigationBookIds, setPendingNavigationBookIds] = useState<string[] | null>(null);
+  const [pendingNavigationFromExternalOpen, setPendingNavigationFromExternalOpen] =
+    useState(false);
   const isInitiating = useRef(false);
 
   const iconSize = useResponsiveSize(18);
@@ -320,6 +322,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
 
       console.log('Opening books:', bookIds);
       if (bookIds.length > 0) {
+        setPendingNavigationFromExternalOpen(true);
         setPendingNavigationBookIds(bookIds);
         return true;
       }
@@ -344,6 +347,7 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
     }
     console.log('Opening last books:', bookIds);
     if (bookIds.length > 0) {
+      setPendingNavigationFromExternalOpen(false);
       setPendingNavigationBookIds(bookIds);
       return true;
     }
@@ -364,12 +368,14 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   useEffect(() => {
     if (pendingNavigationBookIds) {
       const bookIds = pendingNavigationBookIds;
+      const fromExternalOpen = pendingNavigationFromExternalOpen;
       setPendingNavigationBookIds(null);
+      setPendingNavigationFromExternalOpen(false);
       if (bookIds.length > 0) {
-        navigateToReader(router, bookIds);
+        navigateToReader(router, bookIds, fromExternalOpen ? 'externalOpen=1' : undefined);
       }
     }
-  }, [pendingNavigationBookIds, appService, router]);
+  }, [pendingNavigationBookIds, pendingNavigationFromExternalOpen, appService, router]);
 
   useEffect(() => {
     if (isInitiating.current) return;
