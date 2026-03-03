@@ -143,6 +143,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appService?.isAndroidApp,
+    hoveredBookKey,
     sideBarBookKey,
     isSideBarPinned,
     isSideBarVisible,
