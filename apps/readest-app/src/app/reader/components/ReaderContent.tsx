@@ -48,7 +48,6 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   const { isSettingsDialogOpen, settingsDialogBookKey } = useSettingsStore();
   const [showDetailsBook, setShowDetailsBook] = useState<Book | null>(null);
   const isInitiating = useRef(false);
-  const openedFromExternalRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [errorLoading, setErrorLoading] = useState(false);
 
@@ -86,20 +85,6 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const hasExternalOpenMarker = params.get('externalOpen') === '1';
-    const hasWindowOpenWithFiles = params.getAll('file').length > 0 || !!window.OPEN_WITH_FILES?.length;
-    if (hasExternalOpenMarker || hasWindowOpenWithFiles) {
-      openedFromExternalRef.current = true;
-      return;
-    }
-
-    parseOpenWithFiles(appService).then((openWithFiles) => {
-      openedFromExternalRef.current = openedFromExternalRef.current || !!openWithFiles?.length;
-    });
-  }, [appService]);
 
   useEffect(() => {
     const handleShowBookDetails = (event: CustomEvent) => {
@@ -188,10 +173,11 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   }, 200);
 
   const handleBackFromReader = useCallback(async () => {
-    const openedFromExternalApp = openedFromExternalRef.current;
+    const params = new URLSearchParams(window.location.search);
+    const openedFromExternalApp = params.get('externalOpen') === '1';
     if (openedFromExternalApp && appService?.isAndroidApp) {
-      closeActivity().catch(async () => {
-        await tauriHandleClose();
+      closeActivity().catch((error: unknown) => {
+        console.warn('Failed to close activity via native bridge:', error);
       });
       return;
     }
