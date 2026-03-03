@@ -366,6 +366,14 @@ export abstract class BaseAppService implements AppService {
       let filename: string;
       let fileobj: File;
 
+      let existingBookByPath: Book | undefined;
+      if (typeof file === 'string') {
+        const fp = file;
+        if (!isValidURL(fp) && !isContentURI(fp)) {
+          existingBookByPath = books.find((b) => b.filePath === fp);
+        }
+      }
+
       if (transient && typeof file !== 'string') {
         throw new Error('Transient import is only supported for file paths');
       }
@@ -398,7 +406,7 @@ export abstract class BaseAppService implements AppService {
       }
 
       const hash = await partialMD5(fileobj);
-      const existingBook = books.filter((b) => b.hash === hash)[0];
+      const existingBook = existingBookByPath || books.find((b) => b.hash === hash);
       if (existingBook) {
         if (!transient) {
           existingBook.deletedAt = null;
@@ -433,6 +441,7 @@ export abstract class BaseAppService implements AppService {
       }
       // update book metadata when reimporting the same book
       if (existingBook) {
+        book.hash = existingBook.hash;
         existingBook.format = book.format;
         existingBook.title = existingBook.title.trim() ? existingBook.title.trim() : book.title;
         existingBook.sourceTitle = existingBook.sourceTitle ?? book.sourceTitle;
@@ -489,6 +498,9 @@ export abstract class BaseAppService implements AppService {
           if (existingBook) existingBook.url = file;
         }
         if (transient) {
+          book.filePath = file;
+          if (existingBook) existingBook.filePath = file;
+        } else if (!isValidURL(file) && !isContentURI(file)) {
           book.filePath = file;
           if (existingBook) existingBook.filePath = file;
         }
