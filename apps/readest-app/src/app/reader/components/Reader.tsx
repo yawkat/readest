@@ -104,6 +104,11 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
 
   const handleKeyDown = (event: CustomEvent) => {
     if (event.detail.keyName === 'Back') {
+      if (hoveredBookKey) {
+        eventDispatcher.dispatch('close-reader');
+        router.back();
+        return true;
+      }
       if (getIsSideBarVisible() && !isSideBarPinned) {
         setSideBarVisible(false);
       } else if (getIsNotebookVisible() && !isNotebookPinned) {
