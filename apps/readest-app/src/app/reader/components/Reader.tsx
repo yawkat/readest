@@ -21,6 +21,8 @@ import { interceptWindowOpen } from '@/utils/open';
 import { mountAdditionalFonts } from '@/styles/fonts';
 import { isTauriAppPlatform } from '@/services/environment';
 import { closeActivity, getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
+import { parseOpenWithFiles } from '@/helpers/openWith';
+import { tauriHandleClose, tauriQuitApp } from '@/utils/window';
 import { AboutWindow } from '@/components/AboutWindow';
 import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { KOSyncSettingsWindow } from './KOSyncSettings';
@@ -54,6 +56,7 @@ Z-Index Layering Guide:
 
 const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
   const router = useRouter();
+  const openedFromExternalRef = React.useRef(false);
   const { appService } = useEnv();
   const { settings } = useSettingsStore();
   const { libraryLoaded } = useLibrary();
@@ -86,6 +89,27 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openedFromExternalSession = sessionStorage.getItem('opened-from-external') === '1';
+    if (openedFromExternalSession) {
+      sessionStorage.removeItem('opened-from-external');
+    }
+    if (
+      openedFromExternalSession ||
+      params.get('externalOpen') === '1' ||
+      params.getAll('file').length > 0 ||
+      !!window.OPEN_WITH_FILES?.length
+    ) {
+      openedFromExternalRef.current = true;
+      return;
+    }
+
+    parseOpenWithFiles(appService).then((openWithFiles) => {
+      openedFromExternalRef.current = openedFromExternalRef.current || !!openWithFiles?.length;
+    });
+  }, [appService]);
+
+  useEffect(() => {
     const brightness = settings.screenBrightness;
     const autoBrightness = settings.autoScreenBrightness;
     if (appService?.hasScreenBrightness && !autoBrightness && brightness >= 0) {
@@ -109,21 +133,21 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
   const handleKeyDown = (event: CustomEvent) => {
     if (event.detail.keyName === 'Back') {
       const handleReaderBack = () => {
-        const params = new URLSearchParams(window.location.search);
-        const openedFromExternalApp = params.get('externalOpen') === '1';
+        const openedFromExternalApp = openedFromExternalRef.current;
         if (appService?.isAndroidApp && openedFromExternalApp) {
-          const fallbackToLibrary = () => {
-            eventDispatcher.dispatch('close-reader');
-            router.back();
+          const fallbackCloseExternal = () => {
+            tauriHandleClose().catch(async () => {
+              await tauriQuitApp();
+            });
           };
           closeActivity().catch(() => {
-            fallbackToLibrary();
+            fallbackCloseExternal();
           });
           setTimeout(() => {
             if (document.visibilityState === 'visible') {
-              fallbackToLibrary();
+              fallbackCloseExternal();
             }
-          }, 300);
+          }, 600);
           return;
         }
         eventDispatcher.dispatch('close-reader');

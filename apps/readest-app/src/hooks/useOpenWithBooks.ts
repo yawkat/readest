@@ -57,6 +57,7 @@ export function useOpenWithBooks() {
           showLibraryWindow(appService, filePaths);
         }
       } else {
+        sessionStorage.setItem('opened-from-external', '1');
         window.OPEN_WITH_FILES = filePaths;
         setCheckOpenWithBooks(true);
         navigateToLibrary(router, `reload=${Date.now()}`);
