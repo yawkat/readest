@@ -136,8 +136,11 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
         const openedFromExternalApp = openedFromExternalRef.current;
         if (appService?.isAndroidApp && openedFromExternalApp) {
           const closeExternalActivity = () => {
-            closeActivity().catch(() => {
-              tauriHandleClose();
+            closeActivity().catch((error: unknown) => {
+              console.warn('Failed to close activity via native bridge:', error);
+            });
+            tauriHandleClose().catch((error: unknown) => {
+              console.warn('Failed to close current window:', error);
             });
           };
           closeExternalActivity();
