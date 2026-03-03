@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import * as React from 'react';
 import { useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { useEnv } from '@/context/EnvContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -19,7 +20,7 @@ import { eventDispatcher } from '@/utils/event';
 import { interceptWindowOpen } from '@/utils/open';
 import { mountAdditionalFonts } from '@/styles/fonts';
 import { isTauriAppPlatform } from '@/services/environment';
-import { getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
+import { closeActivity, getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
 import { AboutWindow } from '@/components/AboutWindow';
 import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { KOSyncSettingsWindow } from './KOSyncSettings';
@@ -52,6 +53,7 @@ Z-Index Layering Guide:
 */
 
 const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
+  const router = useRouter();
   const { appService } = useEnv();
   const { settings } = useSettingsStore();
   const { libraryLoaded } = useLibrary();
@@ -106,8 +108,30 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
 
   const handleKeyDown = (event: CustomEvent) => {
     if (event.detail.keyName === 'Back') {
+      const handleReaderBack = () => {
+        const params = new URLSearchParams(window.location.search);
+        const openedFromExternalApp = params.get('externalOpen') === '1';
+        if (appService?.isAndroidApp && openedFromExternalApp) {
+          const fallbackToLibrary = () => {
+            eventDispatcher.dispatch('close-reader');
+            router.back();
+          };
+          closeActivity().catch(() => {
+            fallbackToLibrary();
+          });
+          setTimeout(() => {
+            if (document.visibilityState === 'visible') {
+              fallbackToLibrary();
+            }
+          }, 300);
+          return;
+        }
+        eventDispatcher.dispatch('close-reader');
+        router.back();
+      };
+
       if (hoveredBookKey) {
-        eventDispatcher.dispatch('reader-back');
+        handleReaderBack();
         return true;
       }
       if (getIsSideBarVisible() && !isSideBarPinned) {
@@ -115,7 +139,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
       } else if (getIsNotebookVisible() && !isNotebookPinned) {
         setNotebookVisible(false);
       } else {
-        eventDispatcher.dispatch('reader-back');
+        handleReaderBack();
       }
       return true;
     }

@@ -208,16 +208,6 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
     }
   }, [appService, handleCloseBooks]);
 
-  useEffect(() => {
-    const handleReaderBack = () => {
-      handleBackFromReader();
-    };
-    eventDispatcher.on('reader-back', handleReaderBack);
-    return () => {
-      eventDispatcher.off('reader-back', handleReaderBack);
-    };
-  }, [handleBackFromReader]);
-
   const handleCloseBook = async (bookKey: string) => {
     saveConfigAndCloseBook(bookKey);
     if (sideBarBookKey === bookKey) {
