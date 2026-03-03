@@ -88,8 +88,15 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hasWindowOpenWithFiles = params.getAll('file').length > 0 || !!window.OPEN_WITH_FILES?.length;
+    if (hasWindowOpenWithFiles) {
+      openedFromExternalRef.current = true;
+      return;
+    }
+
     parseOpenWithFiles(appService).then((openWithFiles) => {
-      openedFromExternalRef.current = !!openWithFiles?.length;
+      openedFromExternalRef.current = openedFromExternalRef.current || !!openWithFiles?.length;
     });
   }, [appService]);
 
@@ -180,10 +187,11 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   }, 200);
 
   const handleBackFromReader = useCallback(async () => {
-    const openWithFiles = (await parseOpenWithFiles(appService)) || [];
-    const openedFromExternalApp = openedFromExternalRef.current || openWithFiles.length > 0;
+    const openedFromExternalApp = openedFromExternalRef.current;
     if (openedFromExternalApp && appService?.isAndroidApp) {
-      await closeActivity();
+      closeActivity().catch(async () => {
+        await tauriHandleClose();
+      });
       return;
     }
     handleCloseBooks();

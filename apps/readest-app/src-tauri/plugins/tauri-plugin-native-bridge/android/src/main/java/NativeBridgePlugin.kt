@@ -442,8 +442,8 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
     @Command
     fun close_activity(invoke: Invoke) {
         activity.runOnUiThread {
-            activity.finish()
             invoke.resolve()
+            activity.finish()
         }
     }
 
