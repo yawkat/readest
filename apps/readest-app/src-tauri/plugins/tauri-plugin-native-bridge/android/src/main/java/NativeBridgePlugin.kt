@@ -60,6 +60,7 @@ class InstallPackageRequestArgs {
 class SetSystemUIVisibilityRequestArgs {
     var visible: Boolean? = false
     var darkMode: Boolean? = false
+    var showNavigationBar: Boolean? = false
 }
 
 @InvokeArg
@@ -250,6 +251,7 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
         val args = invoke.parseArgs(SetSystemUIVisibilityRequestArgs::class.java)
         val visible = args.visible ?: false
         var isDarkMode = args.darkMode ?: false
+        val showNavigationBar = args.showNavigationBar ?: false
         val ret = JSObject()
         try {
             val window = activity.window
@@ -285,9 +287,18 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
                     }
                     if (visible) {
                         controller.show(WindowInsets.Type.statusBars())
-                        controller.hide(WindowInsets.Type.navigationBars())
+                        if (showNavigationBar) {
+                            controller.show(WindowInsets.Type.navigationBars())
+                        } else {
+                            controller.hide(WindowInsets.Type.navigationBars())
+                        }
                     } else {
-                        controller.hide(WindowInsets.Type.systemBars())
+                        controller.hide(WindowInsets.Type.statusBars())
+                        if (showNavigationBar) {
+                            controller.show(WindowInsets.Type.navigationBars())
+                        } else {
+                            controller.hide(WindowInsets.Type.navigationBars())
+                        }
                     }
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -301,19 +312,30 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
                     }
                     if (visible) {
                         it.show(WindowInsetsCompat.Type.statusBars())
-                        it.hide(WindowInsetsCompat.Type.navigationBars())
+                        if (showNavigationBar) {
+                            it.show(WindowInsetsCompat.Type.navigationBars())
+                        } else {
+                            it.hide(WindowInsetsCompat.Type.navigationBars())
+                        }
                     } else {
-                        it.hide(WindowInsetsCompat.Type.systemBars())
+                        it.hide(WindowInsetsCompat.Type.statusBars())
+                        if (showNavigationBar) {
+                            it.show(WindowInsetsCompat.Type.navigationBars())
+                        } else {
+                            it.hide(WindowInsetsCompat.Type.navigationBars())
+                        }
                     }
                 }
             } else {
                 @Suppress("DEPRECATION")
                 decorView.systemUiVisibility = buildList {
                     add(View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
-                    add(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
-                    add(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
                     add(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-                    add(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+                    if (!showNavigationBar) {
+                        add(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
+                        add(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
+                        add(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+                    }
 
                     if (!visible) {
                         add(View.SYSTEM_UI_FLAG_FULLSCREEN)

@@ -27,6 +27,7 @@ import { requestStoragePermission } from '@/utils/permission';
 import { saveSysSettings } from '@/helpers/settings';
 import { selectDirectory } from '@/utils/bridge';
 import { formatLocaleDateTime } from '@/utils/book';
+import { NavigationBarVisibilityType } from '@/types/settings';
 import UserAvatar from '@/components/UserAvatar';
 import MenuItem from '@/components/MenuItem';
 import Quota from '@/components/Quota';
@@ -54,6 +55,9 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ onPullLibrary, setIsDropdow
   const [isAutoCheckUpdates, setIsAutoCheckUpdates] = useState(settings.autoCheckUpdates);
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(settings.alwaysOnTop);
   const [isAlwaysShowStatusBar, setIsAlwaysShowStatusBar] = useState(settings.alwaysShowStatusBar);
+  const [navigationBarVisibility, setNavigationBarVisibility] = useState(
+    settings.navigationBarVisibility,
+  );
   const [isScreenWakeLock, setIsScreenWakeLock] = useState(settings.screenWakeLock);
   const [isOpenLastBooks, setIsOpenLastBooks] = useState(settings.openLastBooks);
   const [isAutoImportBooksOnOpen, setIsAutoImportBooksOnOpen] = useState(
@@ -126,6 +130,11 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ onPullLibrary, setIsDropdow
     const newValue = !settings.alwaysShowStatusBar;
     saveSysSettings(envConfig, 'alwaysShowStatusBar', newValue);
     setIsAlwaysShowStatusBar(newValue);
+  };
+
+  const setNavigationBarVisibilityMode = (value: NavigationBarVisibilityType) => {
+    saveSysSettings(envConfig, 'navigationBarVisibility', value);
+    setNavigationBarVisibility(value);
   };
 
   const toggleAutoUploadBooks = () => {
@@ -228,6 +237,12 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ onPullLibrary, setIsDropdow
       : themeMode === 'light'
         ? _('Light Mode')
         : _('Auto Mode');
+  const navigationBarLabel =
+    navigationBarVisibility === 'always'
+      ? _('Always')
+      : navigationBarVisibility === 'outside-reader'
+        ? _('Outside Reading View')
+        : _('Never');
 
   const savedBookCoverPath = settings.savedBookCoverForLockScreenPath;
   const coverDir = savedBookCoverPath ? savedBookCoverPath.split('/').pop() : 'Images';
@@ -348,6 +363,27 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({ onPullLibrary, setIsDropdow
           toggled={isAlwaysShowStatusBar}
           onClick={toggleAlwaysShowStatusBar}
         />
+      )}
+      {appService?.isAndroidApp && (
+        <MenuItem label={_('Show Navigation Bar: {{mode}}', { mode: navigationBarLabel })}>
+          <ul className='ms-0 flex flex-col ps-0 before:hidden'>
+            <MenuItem
+              label={_('Never')}
+              toggled={navigationBarVisibility === 'never'}
+              onClick={() => setNavigationBarVisibilityMode('never')}
+            />
+            <MenuItem
+              label={_('Outside Reading View')}
+              toggled={navigationBarVisibility === 'outside-reader'}
+              onClick={() => setNavigationBarVisibilityMode('outside-reader')}
+            />
+            <MenuItem
+              label={_('Always')}
+              toggled={navigationBarVisibility === 'always'}
+              onClick={() => setNavigationBarVisibilityMode('always')}
+            />
+          </ul>
+        </MenuItem>
       )}
       <MenuItem
         label={_('Keep Screen Awake')}

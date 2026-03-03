@@ -249,6 +249,7 @@ export abstract class BaseAppService implements AppService {
       'Settings',
       defaultSettings,
     );
+    const loadedNavigationBarVisibility = settings.navigationBarVisibility;
 
     const version = settings.version ?? 0;
     if (this.isAppDataSandbox || version < SYSTEM_SETTINGS_VERSION) {
@@ -259,6 +260,12 @@ export abstract class BaseAppService implements AppService {
       ...(this.isMobile ? DEFAULT_MOBILE_SYSTEM_SETTINGS : {}),
       ...settings,
     };
+    const legacyShowNavigationBar = (settings as SystemSettings & { alwaysShowNavigationBar?: boolean })
+      .alwaysShowNavigationBar;
+    if (loadedNavigationBarVisibility == null && typeof legacyShowNavigationBar === 'boolean') {
+      settings.navigationBarVisibility = legacyShowNavigationBar ? 'outside-reader' : 'never';
+      Reflect.deleteProperty(settings as object, 'alwaysShowNavigationBar');
+    }
     settings.globalReadSettings = {
       ...DEFAULT_READSETTINGS,
       ...(this.isMobile ? DEFAULT_MOBILE_READSETTINGS : {}),

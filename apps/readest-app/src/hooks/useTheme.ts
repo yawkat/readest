@@ -10,11 +10,13 @@ import { parseWebViewVersion } from '@/utils/ua';
 type UseThemeProps = {
   systemUIVisible?: boolean;
   appThemeColor?: keyof Palette;
+  showNavigationBar?: boolean;
 };
 
 export const useTheme = ({
   systemUIVisible = true,
   appThemeColor = 'base-100',
+  showNavigationBar,
 }: UseThemeProps = {}) => {
   const { appService } = useEnv();
   const { settings } = useSettingsStore();
@@ -50,14 +52,26 @@ export const useTheme = ({
     if (!appService?.isMobileApp) return;
 
     const visible = !!(systemUIVisible && !systemUIAlwaysHidden);
+    const navigationBarVisibility = settings.navigationBarVisibility ?? 'never';
+    const shouldShowNavigationBar =
+      showNavigationBar ??
+      (!!appService?.isAndroidApp &&
+        (navigationBarVisibility === 'outside-reader' || navigationBarVisibility === 'always'));
     if (visible) {
       showSystemUI();
     } else {
       dismissSystemUI();
     }
-    setSystemUIVisibility({ visible, darkMode: isDarkMode });
+    setSystemUIVisibility({ visible, darkMode: isDarkMode, showNavigationBar: shouldShowNavigationBar });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appService, isDarkMode, systemUIVisible]);
+  }, [
+    appService,
+    isDarkMode,
+    settings.navigationBarVisibility,
+    showNavigationBar,
+    systemUIVisible,
+    systemUIAlwaysHidden,
+  ]);
 
   useEffect(() => {
     if (appService?.isMobileApp) {

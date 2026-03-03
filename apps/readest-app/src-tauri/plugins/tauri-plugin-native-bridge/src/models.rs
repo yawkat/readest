@@ -51,6 +51,7 @@ pub struct InstallPackageResponse {
 pub struct SetSystemUIVisibilityRequest {
     pub visible: bool,
     pub dark_mode: bool,
+    pub show_navigation_bar: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
