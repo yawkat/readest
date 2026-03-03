@@ -3,7 +3,6 @@
 import clsx from 'clsx';
 import * as React from 'react';
 import { useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { useEnv } from '@/context/EnvContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -53,7 +52,6 @@ Z-Index Layering Guide:
 */
 
 const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
-  const router = useRouter();
   const { appService } = useEnv();
   const { settings } = useSettingsStore();
   const { libraryLoaded } = useLibrary();
@@ -109,8 +107,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
   const handleKeyDown = (event: CustomEvent) => {
     if (event.detail.keyName === 'Back') {
       if (hoveredBookKey) {
-        eventDispatcher.dispatch('close-reader');
-        router.back();
+        eventDispatcher.dispatch('reader-back');
         return true;
       }
       if (getIsSideBarVisible() && !isSideBarPinned) {
@@ -118,8 +115,7 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
       } else if (getIsNotebookVisible() && !isNotebookPinned) {
         setNotebookVisible(false);
       } else {
-        eventDispatcher.dispatch('close-reader');
-        router.back();
+        eventDispatcher.dispatch('reader-back');
       }
       return true;
     }

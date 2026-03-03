@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Book } from '@/types/book';
@@ -47,6 +47,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   const { isSettingsDialogOpen, settingsDialogBookKey } = useSettingsStore();
   const [showDetailsBook, setShowDetailsBook] = useState<Book | null>(null);
   const isInitiating = useRef(false);
+  const openedFromExternalRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [errorLoading, setErrorLoading] = useState(false);
 
@@ -84,6 +85,12 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    parseOpenWithFiles(appService).then((openWithFiles) => {
+      openedFromExternalRef.current = !!openWithFiles?.length;
+    });
+  }, [appService]);
 
   useEffect(() => {
     const handleShowBookDetails = (event: CustomEvent) => {
@@ -171,19 +178,34 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
     await saveSettings(envConfig, settings);
   }, 200);
 
-  const handleCloseBooksToLibrary = () => {
+  const handleBackFromReader = useCallback(async () => {
     handleCloseBooks();
+    const openWithFiles = (await parseOpenWithFiles(appService)) || [];
+    const openedFromExternalApp = openedFromExternalRef.current || openWithFiles.length > 0;
     if (isTauriAppPlatform()) {
+      if (openedFromExternalApp && appService?.isMobileApp) {
+        return await tauriHandleClose();
+      }
       const currentWindow = getCurrentWindow();
       if (currentWindow.label === 'main') {
         navigateBackToLibrary();
       } else {
-        currentWindow.close();
+        await currentWindow.close();
       }
     } else {
       navigateBackToLibrary();
     }
-  };
+  }, [appService, handleCloseBooks]);
+
+  useEffect(() => {
+    const handleReaderBack = () => {
+      handleBackFromReader();
+    };
+    eventDispatcher.on('reader-back', handleReaderBack);
+    return () => {
+      eventDispatcher.off('reader-back', handleReaderBack);
+    };
+  }, [handleBackFromReader]);
 
   const handleCloseBook = async (bookKey: string) => {
     saveConfigAndCloseBook(bookKey);
@@ -228,7 +250,7 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
       <BooksGrid
         bookKeys={bookKeys}
         onCloseBook={handleCloseBook}
-        onGoToLibrary={handleCloseBooksToLibrary}
+        onGoToLibrary={handleBackFromReader}
       />
       {isSettingsDialogOpen && <SettingsDialog bookKey={settingsDialogBookKey} />}
       <Notebook />
