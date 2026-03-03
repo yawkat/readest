@@ -26,6 +26,7 @@ export interface InstallPackageResponse {
 export interface SetSystemUIVisibilityRequest {
   visible: boolean;
   darkMode: boolean;
+  showNavigationBar?: boolean;
 }
 
 export interface SetSystemUIVisibilityResponse {

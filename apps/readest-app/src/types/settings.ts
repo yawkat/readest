@@ -22,6 +22,7 @@ export const LibrarySortByType = {
 export type LibrarySortByType = (typeof LibrarySortByType)[keyof typeof LibrarySortByType];
 
 export type LibraryCoverFitType = 'crop' | 'fit';
+export type NavigationBarVisibilityType = 'never' | 'outside-reader' | 'always';
 
 export const LibraryGroupByType = {
   None: 'none',
@@ -84,6 +85,7 @@ export interface SystemSettings {
   screenBrightness: number;
   autoScreenBrightness: boolean;
   alwaysShowStatusBar: boolean;
+  navigationBarVisibility: NavigationBarVisibilityType;
   alwaysInForeground: boolean;
   openLastBooks: boolean;
   lastOpenBooks: string[];

@@ -68,7 +68,11 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
   const { getIsNotebookVisible, setNotebookVisible } = useNotebookStore();
   const { isDarkMode, systemUIAlwaysHidden, isRoundedWindow } = useThemeStore();
 
-  useTheme({ systemUIVisible: settings.alwaysShowStatusBar, appThemeColor: 'base-100' });
+  useTheme({
+    systemUIVisible: settings.alwaysShowStatusBar,
+    appThemeColor: 'base-100',
+    showNavigationBar: false,
+  });
   useScreenWakeLock(settings.screenWakeLock);
   useTransferQueue(libraryLoaded, 5000);
 
@@ -145,18 +149,46 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
     isNotebookVisible,
   ]);
 
-  useEffect(() => {
+  const applyReaderSystemUIVisibility = React.useCallback(() => {
     if (!appService?.isMobileApp) return;
     const systemUIVisible = !!hoveredBookKey || settings.alwaysShowStatusBar;
     const visible = !!(systemUIVisible && !systemUIAlwaysHidden);
-    setSystemUIVisibility({ visible, darkMode: isDarkMode });
+    const navMode = settings.navigationBarVisibility;
+    const showNavigationBar =
+      !!appService?.isAndroidApp &&
+      (navMode === 'always' || (navMode === 'outside-reader' && !!hoveredBookKey)) &&
+      !systemUIAlwaysHidden;
+    setSystemUIVisibility({ visible, darkMode: isDarkMode, showNavigationBar });
     if (visible) {
       showSystemUI();
     } else {
       dismissSystemUI();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hoveredBookKey]);
+  }, [
+    appService?.isAndroidApp,
+    appService?.isMobileApp,
+    dismissSystemUI,
+    hoveredBookKey,
+    isDarkMode,
+    settings.navigationBarVisibility,
+    settings.alwaysShowStatusBar,
+    showSystemUI,
+    systemUIAlwaysHidden,
+  ]);
+
+  useEffect(() => {
+    if (!appService?.isMobileApp) return;
+    applyReaderSystemUIVisibility();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        applyReaderSystemUIVisibility();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [appService?.isMobileApp, applyReaderSystemUIVisibility]);
 
   return libraryLoaded && settings.globalReadSettings ? (
     <div

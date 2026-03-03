@@ -38,6 +38,7 @@ class UseBackgroundAudioRequestArgs: Decodable {
 class SetSystemUIVisibilityRequestArgs: Decodable {
   let visible: Bool
   let darkMode: Bool
+  let showNavigationBar: Bool?
 }
 
 class InterceptKeysRequestArgs: Decodable {
