@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.os.Build
-import android.os.Process
 import android.os.Environment
 import android.provider.Settings
 import android.provider.DocumentsContract
@@ -444,16 +443,7 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
     fun close_activity(invoke: Invoke) {
         activity.runOnUiThread {
             invoke.resolve()
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    activity.finishAndRemoveTask()
-                } else {
-                    activity.finishAffinity()
-                }
-                activity.finish()
-            } finally {
-                Process.killProcess(Process.myPid())
-            }
+            activity.finish()
         }
     }
 
