@@ -103,6 +103,14 @@ impl<R: Runtime> NativeBridge<R> {
 }
 
 impl<R: Runtime> NativeBridge<R> {
+    pub fn close_activity(&self) -> crate::Result<()> {
+        self.0
+            .run_mobile_plugin("close_activity", ())
+            .map_err(Into::into)
+    }
+}
+
+impl<R: Runtime> NativeBridge<R> {
     pub fn lock_screen_orientation(
         &self,
         payload: LockScreenOrientationRequest,

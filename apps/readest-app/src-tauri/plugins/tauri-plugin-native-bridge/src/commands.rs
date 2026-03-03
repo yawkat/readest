@@ -77,6 +77,11 @@ pub(crate) async fn intercept_keys<R: Runtime>(
 }
 
 #[command]
+pub(crate) async fn close_activity<R: Runtime>(app: AppHandle<R>) -> Result<()> {
+    app.native_bridge().close_activity()
+}
+
+#[command]
 pub(crate) async fn lock_screen_orientation<R: Runtime>(
     app: AppHandle<R>,
     payload: LockScreenOrientationRequest,

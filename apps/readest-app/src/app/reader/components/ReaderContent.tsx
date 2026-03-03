@@ -23,6 +23,7 @@ import { eventDispatcher } from '@/utils/event';
 import { navigateToLibrary } from '@/utils/nav';
 import { clearDiscordPresence } from '@/utils/discord';
 import { BOOK_IDS_SEPARATOR } from '@/services/constants';
+import { closeActivity } from '@/utils/bridge';
 import { BookDetailModal } from '@/components/metadata';
 
 import useBooksManager from '../hooks/useBooksManager';
@@ -179,13 +180,14 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
   }, 200);
 
   const handleBackFromReader = useCallback(async () => {
-    handleCloseBooks();
     const openWithFiles = (await parseOpenWithFiles(appService)) || [];
     const openedFromExternalApp = openedFromExternalRef.current || openWithFiles.length > 0;
+    if (openedFromExternalApp && appService?.isAndroidApp) {
+      await closeActivity();
+      return;
+    }
+    handleCloseBooks();
     if (isTauriAppPlatform()) {
-      if (openedFromExternalApp && appService?.isMobileApp) {
-        return await tauriHandleClose();
-      }
       const currentWindow = getCurrentWindow();
       if (currentWindow.label === 'main') {
         navigateBackToLibrary();
