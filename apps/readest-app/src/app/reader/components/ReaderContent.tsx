@@ -89,8 +89,9 @@ const ReaderContent: React.FC<{ ids?: string; settings: SystemSettings }> = ({ i
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const hasExternalOpenMarker = params.get('externalOpen') === '1';
     const hasWindowOpenWithFiles = params.getAll('file').length > 0 || !!window.OPEN_WITH_FILES?.length;
-    if (hasWindowOpenWithFiles) {
+    if (hasExternalOpenMarker || hasWindowOpenWithFiles) {
       openedFromExternalRef.current = true;
       return;
     }
