@@ -442,8 +442,24 @@ class NativeBridgePlugin(private val activity: Activity): Plugin(activity) {
     @Command
     fun close_activity(invoke: Invoke) {
         activity.runOnUiThread {
-            invoke.resolve()
-            activity.finish()
+            try {
+                if (activity.isFinishing || activity.isDestroyed) {
+                    invoke.resolve()
+                    return@runOnUiThread
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    activity.finishAndRemoveTask()
+                } else {
+                    activity.finishAffinity()
+                }
+
+                activity.moveTaskToBack(true)
+                activity.finish()
+                invoke.resolve()
+            } catch (e: Exception) {
+                invoke.reject("Failed to close activity: ${e.message}")
+            }
         }
     }
 

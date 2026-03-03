@@ -22,7 +22,6 @@ import { mountAdditionalFonts } from '@/styles/fonts';
 import { isTauriAppPlatform } from '@/services/environment';
 import { closeActivity, getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
 import { parseOpenWithFiles } from '@/helpers/openWith';
-import { tauriHandleClose } from '@/utils/window';
 import { AboutWindow } from '@/components/AboutWindow';
 import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { KOSyncSettingsWindow } from './KOSyncSettings';
@@ -138,9 +137,6 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
           const closeExternalActivity = () => {
             closeActivity().catch((error: unknown) => {
               console.warn('Failed to close activity via native bridge:', error);
-            });
-            tauriHandleClose().catch((error: unknown) => {
-              console.warn('Failed to close current window:', error);
             });
           };
           closeExternalActivity();
