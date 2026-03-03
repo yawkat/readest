@@ -22,7 +22,7 @@ import { mountAdditionalFonts } from '@/styles/fonts';
 import { isTauriAppPlatform } from '@/services/environment';
 import { closeActivity, getSysFontsList, setSystemUIVisibility } from '@/utils/bridge';
 import { parseOpenWithFiles } from '@/helpers/openWith';
-import { tauriHandleClose, tauriQuitApp } from '@/utils/window';
+import { tauriQuitApp } from '@/utils/window';
 import { AboutWindow } from '@/components/AboutWindow';
 import { UpdaterWindow } from '@/components/UpdaterWindow';
 import { KOSyncSettingsWindow } from './KOSyncSettings';
@@ -135,19 +135,15 @@ const Reader: React.FC<{ ids?: string }> = ({ ids }) => {
       const handleReaderBack = () => {
         const openedFromExternalApp = openedFromExternalRef.current;
         if (appService?.isAndroidApp && openedFromExternalApp) {
-          const fallbackCloseExternal = () => {
-            tauriHandleClose().catch(async () => {
-              await tauriQuitApp();
-            });
+          const forceQuit = () => {
+            tauriQuitApp();
           };
           closeActivity().catch(() => {
-            fallbackCloseExternal();
+            forceQuit();
           });
           setTimeout(() => {
-            if (document.visibilityState === 'visible') {
-              fallbackCloseExternal();
-            }
-          }, 600);
+            forceQuit();
+          }, 500);
           return;
         }
         eventDispatcher.dispatch('close-reader');
